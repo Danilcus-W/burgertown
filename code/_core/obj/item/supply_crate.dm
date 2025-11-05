@@ -16,8 +16,6 @@
 
 	var/has_gibs = TRUE
 
-	value = 1 //Dummy value.
-
 	weight = 10
 
 	rarity = RARITY_RARE
@@ -28,10 +26,8 @@
 
 
 /obj/item/supply_crate/get_base_value()
-	if(!loot)
+	if(!loot || !SSloot || !SSloot.initialized)
 		return 0
-	if(!SSloot || !SSloot.initialized)
-		return null
 	var/loot/L = LOOT(loot)
 	return CEILING(L.average_value * 1.25,100)
 
@@ -73,23 +69,29 @@
 /obj/item/supply_crate/slavic
 	loot = /loot/supply_crate/slavic
 	icon_state = "supply_slavic"
+	value = 1
 
 /obj/item/supply_crate/syndicate
 	loot = /loot/supply_crate/syndicate
 	icon_state = "supply_syndicate"
+	value = 1
 
 /obj/item/supply_crate/solarian
 	loot = /loot/supply_crate/solarian
 	icon_state = "supply_solarian"
+	value = 1
 
 /obj/item/supply_crate/nanotrasen
 	loot = /loot/supply_crate/nanotrasen
 	icon_state = "supply_nanotrasen"
+	value = 1
 
 /obj/item/supply_crate/magic
 	loot = /loot/supply_crate/magic
 	icon_state = "supply_magic"
+	value = 1
 
 /obj/item/supply_crate/medicine
 	loot = /loot/supply_crate/medicine
 	icon_state = "supply_medicine"
+	value = 1

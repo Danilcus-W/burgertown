@@ -3,51 +3,63 @@
 	icon = 'icons/obj/item/corrupting_frog.dmi'
 	icon_state = "inventory"
 	desc = "One frog was harmed in the making of this item."
-	desc_extended = "A magical wooden frog doll that has the ability to sacrifice one item into another similiar item. Must be used on an item on the ground. Has one use, then disappears."
+	desc_extended = "A magical wooden frog doll that has the abiltity to turn a weapon or clothing item into another similiar object, with unpredictable results..."
 	rarity = RARITY_LEGENDARY
-	value = 4000
+	value = 6000
 	value_burgerbux = 1
+	var/can_use = TRUE
 
-/obj/item/corrupting_frog/click_on_object(var/mob/caller,var/atom/object,location,control,params)
+/obj/item/corrupting_frog/click_on_object(var/mob/activator, var/atom/object, location, control, params)
 
-	if(!is_item(object) || !is_turf(object.loc))
+	if(!is_item(object))
 		return ..()
 
-	var/obj/item/O = object
+	var/obj/item/I = object
 
-	if(!O.is_safe_to_delete())
-		return ..()
-
-	var/list/possible_types = subtypesof(O.type)
-	possible_types += typesof(O.parent_type) - O.type
-
-	for(var/k in possible_types)
-		if(!SSbalance.stored_value[k])
-			possible_types -= k
-
-	if(!length(possible_types))
-		caller.to_chat(span("warning","\The [src.name] doesn't seem to work on \the [O.name]..."))
+	if(!can_corrupt_target(activator,object))
 		return TRUE
 
-	var/turf/T = get_turf(O)
+	var/choice = input("Are you sure you want to corrupt \the [I.name]? This may have unpredictable effects...","Corrupting Frog") as null|anything in list("Yes","No","Cancel")
+	if(choice != "Yes")
+		return ..()
 
-	var/old_object_name = O.name
-
-	qdel(O)
-
-	var/obj/item/I = pick(possible_types)
-	I = new I(T)
-	INITIALIZE(I)
-	GENERATE(I)
-	FINALIZE(I)
-
-	visible_message(
-		span("notice","With the flick of \the [src.name], \the [caller.name] turns \the [old_object_name] into \the [I.name]!"),
-		span("notice","With the flick of \the [src.name], you turn \the [old_object_name] into \the [I.name]!")
-	)
-
-	play_sound('sound/weapons/magic/zap_large.ogg',T)
-
-	qdel(src)
+	PROGRESS_BAR(activator,src,30,src::try_corrupt(),activator,I)
+	PROGRESS_BAR_CONDITIONS(activator,src,src::can_corrupt_target(),activator,I)
 
 	return TRUE
+
+
+/obj/item/corrupting_frog/proc/can_corrupt_target(var/mob/activator,var/obj/item/target)
+
+	INTERACT_CHECK_NO_DELAY(src)
+	INTERACT_CHECK_NO_DELAY(target)
+
+	if(!can_use) //Prevents race conditions.
+		return FALSE
+
+	if(target.no_drop || !target.can_save || !target.can_corrupt)
+		activator.to_chat(span("warning","You can't use \the [src.name] on \the [target.name]... perhaps try a different object."))
+		return FALSE
+
+	if(!isturf(target.loc))
+		activator.to_chat(span("warning","Put \the [src.name] on the ground before trying to corrupt it!"))
+		return FALSE
+
+	return TRUE
+
+
+/obj/item/corrupting_frog/proc/try_corrupt(var/mob/activator,var/obj/item/target)
+
+	can_use = FALSE
+
+	var/obj/item/corruption_result = target.corrupt()
+
+	if(corruption_result)
+		corruption_result.visible_message(span("warning","\The [target.name] transforms into \the [corruption_result.name]!"))
+		play_sound('sound/weapons/magic/zap_large.ogg',get_turf(corruption_result))
+		qdel(src)
+	else
+		can_use = TRUE
+		activator.to_chat(span("warning","Corruption failed... perhaps try using this on a different object."))
+
+	can_use = TRUE

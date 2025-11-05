@@ -22,6 +22,7 @@ obj/structure/interactive/bed
 
 	density = TRUE
 
+/*
 /obj/structure/interactive/bed/Crossed(atom/movable/O,atom/OldLoc)
 	. = ..()
 	if(src.z && is_living(O))
@@ -37,8 +38,9 @@ obj/structure/interactive/bed
 				found = TRUE
 			if(found)
 				L.add_disease(/disease/hrp)
+*/
 
-/obj/structure/interactive/bed/buckle(var/mob/living/victim,var/mob/caller,var/silent=FALSE)
+/obj/structure/interactive/bed/buckle(var/mob/living/victim,var/mob/activator,var/silent=FALSE)
 
 	. = ..()
 
@@ -47,7 +49,7 @@ obj/structure/interactive/bed
 		victim.pixel_x = pixel_offset_x
 		victim.pixel_y = pixel_offset_y
 
-/obj/structure/interactive/bed/unbuckle(var/mob/caller,var/silent=FALSE,var/force=FALSE)
+/obj/structure/interactive/bed/unbuckle(var/mob/activator,var/silent=FALSE,var/force=FALSE)
 
 	var/mob/living/L = buckled
 
@@ -58,12 +60,12 @@ obj/structure/interactive/bed
 		animate(L,pixel_x = initial(L.pixel_x), pixel_y = initial(L.pixel_y),time = 5)
 
 
-obj/structure/interactive/bed/clicked_on_by_object(var/mob/caller,var/atom/object,location,control,params)
+obj/structure/interactive/bed/clicked_on_by_object(var/mob/activator,var/atom/object,location,control,params)
 
 	if(buckled)
 		INTERACT_CHECK
 		INTERACT_CHECK_OBJECT
-		unbuckle(caller)
+		unbuckle(activator)
 		return TRUE
 
 	var/mob/living/L
@@ -76,7 +78,7 @@ obj/structure/interactive/bed/clicked_on_by_object(var/mob/caller,var/atom/objec
 	if(L)
 		INTERACT_CHECK
 		INTERACT_CHECK_OBJECT
-		buckle(L,caller)
+		buckle(L,activator)
 		return TRUE
 
 	return FALSE

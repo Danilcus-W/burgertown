@@ -593,13 +593,26 @@
 			return FALSE
 
 	if(worn)
+
+		if(!(I.item_slot & item_slot))
+			if(messages)
+				owner.to_chat(span("notice","\The [I.name] doesn't fit on \the [src.loc.name]!"))
+			return FALSE
+
+		if(item_slot_mod & (SLOT_MOD_LEFT | SLOT_MOD_RIGHT) && !((I.item_slot_mod & SLOT_MOD_RIGHT) && (I.item_slot_mod & SLOT_MOD_LEFT))) //has left or right ,but not both.
+			var/is_right_hand = item_slot_mod & SLOT_MOD_RIGHT
+			var/is_right_item = I.item_slot_mod & SLOT_MOD_RIGHT
+			if(is_right_hand != is_right_item)
+				if(messages)
+					owner.to_chat(span("notice","\The [I.name] doesn't fit on \the [src.loc.name]!"))
+				return FALSE
+
 		if(worn_allow_duplicate)
 			for(var/k in contents)
 				var/obj/item/I2 = k
-				if(I.item_slot & I.item_slot)
+				if(I.item_slot & I2.item_slot)
 					if(messages) owner.to_chat(span("warning","You cannot wear \the [I.name] and \the [I2.name] at the same time!"))
 					return FALSE
-
 
 		if(is_advanced(owner))
 			var/mob/living/advanced/A = owner
@@ -608,13 +621,13 @@
 					var/obj/item/clothing/existing_clothing = k
 					if(!is_clothing(existing_clothing))
 						continue
-					if(existing_clothing.item_slot_layer < I.item_slot_layer)
+					if(existing_clothing.item_slot_layer && existing_clothing.item_slot_layer < I.item_slot_layer)
 						continue
 					if(messages) owner.to_chat(span("warning","\The [existing_clothing.name] prevents you from wearing \the [I.name]!"))
 					return FALSE
 			if(is_clothing(I))
 				var/obj/item/clothing/C = I
-				if(C.flags_clothing)
+				if(C.flags_clothing & (FLAG_CLOTHING_NOBEAST_FEET | FLAG_CLOTHING_NOBEAST_HEAD))
 					for(var/k in A.organs)
 						var/obj/item/organ/O = k
 						if(C.flags_clothing & FLAG_CLOTHING_NOBEAST_FEET && O.flags_organ & FLAG_ORGAN_BEAST_FEET)
@@ -623,24 +636,11 @@
 						if(C.flags_clothing & FLAG_CLOTHING_NOBEAST_HEAD && O.flags_organ & FLAG_ORGAN_BEAST_HEAD)
 							if(messages) owner.to_chat(span("warning","You cannot seem to fit \the [I.name] on your non-humanoid head..."))
 							return FALSE
-
-		if(!(I.item_slot & item_slot))
-			if(messages)
-				owner.to_chat(span("notice","\The [I.name] doesn't fit on \the [src.loc.name]!"))
+	else
+		if(max_size >= 0 && I.size > max_size && !(item_bypass && I.type in item_bypass) && !(I.inventory_bypass && src.type in I.inventory_bypass))
+			if(messages && src.loc)
+				owner.to_chat(span("warning","\The [I] is too large to be put in \the [src.loc.name]."))
 			return FALSE
-
-		if(item_slot_mod & (SLOT_MOD_LEFT | SLOT_MOD_RIGHT) && !((I.item_slot_mod & SLOT_MOD_RIGHT) && (I.item_slot_mod & SLOT_MOD_LEFT)))
-			var/is_right_hand = item_slot_mod & SLOT_MOD_RIGHT
-			var/is_right_item = I.item_slot_mod & SLOT_MOD_RIGHT
-			if(is_right_hand != is_right_item)
-				if(messages)
-					owner.to_chat(span("notice","\The [I.name] doesn't fit on \the [src.loc.name]!"))
-				return FALSE
-
-	if(max_size >= 0 && I.size > max_size && !(item_bypass && I.type in item_bypass) && !(I.inventory_bypass && src.type in I.inventory_bypass))
-		if(messages && src.loc)
-			owner.to_chat(span("warning","\The [I] is too large to be put in \the [src.loc.name]."))
-		return FALSE
 
 	return TRUE
 

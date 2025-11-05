@@ -13,8 +13,6 @@
 
 	quality = 100
 
-	value = 0
-
 	color = "#FFFFFF"
 	var/color_2 = "#FFFFFF"
 	var/color_3 = "#FFFFFF"
@@ -38,6 +36,10 @@
 /obj/item/supportgem/proc/get_power()
 	return power_base + (quality-100)*power_per_quality
 
+/obj/item/supportgem/set_quality(var/quality_to_set=100,var/force=FALSE)
+	. = ..()
+	if(.)
+		update_support_stats()
 
 /obj/item/supportgem/update_overlays()
 	. = ..()
@@ -63,11 +65,6 @@
 /obj/item/supportgem/Finalize()
 	. = ..()
 	update_sprite()
-
-/obj/item/supportgem/adjust_quality(var/quality_to_add=0)
-	. = ..()
-	if(.)
-		update_support_stats()
 
 /obj/item/supportgem/get_examine_list(var/mob/examiner)
 	. = ..()

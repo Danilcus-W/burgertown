@@ -15,12 +15,12 @@
 	weight = 2
 	has_quick_function = TRUE //allows batteries in the belt slots
 
-/obj/item/powercell/quick(var/mob/caller,var/atom/object,location,params)
+/obj/item/powercell/quick(var/mob/activator,var/atom/object,location,params)
 
-	if(!is_advanced(caller) || !is_inventory(src.loc))
+	if(!is_advanced(activator) || !is_inventory(src.loc))
 		return FALSE
 
-	var/mob/living/advanced/A = caller
+	var/mob/living/advanced/A = activator
 
 	return A.put_in_hands(src,params)
 
@@ -135,7 +135,7 @@
 /obj/item/powercell/recharging
 	name = "fusion power cell"
 	desc = "Do not STOMACH."
-	desc_extended = "A power cell for use in recharging energy weaponry. This one has a rating of 10000 megawatts, and self-charges"
+	desc_extended = "A power cell for use in recharging energy weaponry. This one self charges!"
 	icon = 'icons/obj/item/cells.dmi'
 	icon_state = "cell_recharging"
 
@@ -149,27 +149,24 @@
 
 	value_burgerbux = 1 //Citizens aren't supposed to have recharging power cells.
 
-/obj/item/powercell/recharging/on_equip(var/atom/old_location,var/slient=FALSE)
-	. = ..()
-	var/obj/hud/inventory/new_location = loc
-	if(new_location.click_flags && new_location.owner)
-		var/mob/living/advanced/A = new_location.owner
-		A.to_chat(span("danger","\The intense heat from \the [src.name] burns your hand and forces you to drop it!"))
-		A.add_status_effect(STUN,30,30)
-		if(is_organ(new_location.loc))
-			var/obj/item/organ/O = new_location.loc
-			O.health.adjust_loss_smart(burn=10)
-		src.drop_item(get_turf(A))
-
 /obj/item/powercell/recharging/PostInitialize()
 	START_THINKING(src)
 	return ..()
 
 /obj/item/powercell/recharging/think()
+
 	charge_current = min(charge_current + charge_max*0.001,charge_max)
+
+	var/obj/item/weapon/ranged/energy/E = src.loc
+	if(E && istype(E) && E.charge_icon_state_count)
+		var/desired_state = E.get_charge_icon_state()
+		if(desired_state != E.old_charge_icon_state)
+			E.overlays.Cut()
+			E.update_overlays()
+
 	return ..()
 
-/obj/item/powercell/get_examine_list(var/mob/caller)
+/obj/item/powercell/get_examine_list(var/mob/activator)
 	return ..() + div("notice","It has [charge_current] out of [charge_max] charge remaining.")
 
 
@@ -188,3 +185,9 @@
 	value = 0
 
 	weight = 0
+
+/obj/item/powercell/dummy/get_base_value()
+	return 0
+
+/obj/item/powercell/dummy/get_value()
+	return 0

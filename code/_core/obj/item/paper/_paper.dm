@@ -8,9 +8,9 @@
 
 	var/last_page = 1
 
-	var/list/data = list("There is nothing here.","Oh god oh fuck.")
+	var/list/data = list("There is nothing here.","Also nothing here.")
 
-	value = 10
+	value = 1
 
 	drop_sound = 'sound/items/drop/paper.ogg'
 
@@ -18,15 +18,15 @@
 
 	weight = 0.01
 
-/obj/item/paper/click_self(var/mob/caller,location,control,params)
+/obj/item/paper/click_self(var/mob/activator,location,control,params)
 
-	if(!is_player(caller) || !caller.client)
+	if(!is_player(activator) || !activator.client)
 		return ..()
 
 	INTERACT_CHECK
 	INTERACT_DELAY(2)
 
-	var/mob/living/advanced/player/P = caller
+	var/mob/living/advanced/player/P = activator
 
 	if(P.active_paper)
 		close_menu(P,/menu/paper/)

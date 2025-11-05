@@ -17,6 +17,10 @@
 
 	damage_mod = 1
 
+	var/charge_icon_state_count = 0
+	var/old_charge_icon_state
+	var/charge_icon_uses_bullet_color = FALSE
+
 /obj/item/weapon/ranged/energy/PreDestroy()
 	QDEL_NULL(battery)
 	. = ..()
@@ -60,9 +64,7 @@
 
 	charge_cost = get_charge_cost()
 
-/obj/item/weapon/ranged/energy/clicked_on_by_object(var/mob/caller,var/atom/object,location,control,params)
-
-
+/obj/item/weapon/ranged/energy/clicked_on_by_object(var/mob/activator,var/atom/object,location,control,params)
 
 	if(istype(object,/obj/item/))
 
@@ -75,11 +77,11 @@
 			if(battery)
 				battery.drop_item(get_turf(src))
 				battery.update_sprite()
-				caller.to_chat(span("notice","You pry out \the [battery.name]."))
+				activator.to_chat(span("notice","You pry out \the [battery.name]."))
 				battery = null
 				update_sprite()
 			else
-				caller.to_chat(span("warning","There is nothing to pry out of \the [src.name]!"))
+				activator.to_chat(span("warning","There is nothing to pry out of \the [src.name]!"))
 			return TRUE
 
 		if(istype(I,/obj/item/powercell/))
@@ -87,19 +89,19 @@
 			INTERACT_CHECK_OBJECT
 			INTERACT_DELAY(5)
 			if(battery)
-				caller.to_chat(span("warning","There is already a battery installed in \the [src.name]!"))
+				activator.to_chat(span("warning","There is already a battery installed in \the [src.name]!"))
 				return TRUE
 			var/obj/item/powercell/P = I
 			if(P.size > SIZE_2) //Only fits size 2.
-				caller.to_chat(span("warning","\The [P.name] is too large to be put into \the [src.name]!"))
+				activator.to_chat(span("warning","\The [P.name] is too large to be put into \the [src.name]!"))
 				return TRUE
 			if(battery)
-				caller.to_chat(span("notice","You swap out \the [battery.name] for \the [P.name] in \the [src.name]."))
-				battery.drop_item(get_turf(caller))
+				activator.to_chat(span("notice","You swap out \the [battery.name] for \the [P.name] in \the [src.name]."))
+				battery.drop_item(get_turf(activator))
 				battery.update_sprite()
 				battery = null
 			else
-				caller.to_chat(span("notice","You insert \the [P.name] into \the [src.name]."))
+				activator.to_chat(span("notice","You insert \the [P.name] into \the [src.name]."))
 
 			battery = P
 			P.drop_item(src)
@@ -129,13 +131,25 @@
 		return 0
 	return FLOOR(battery.charge_current/charge_cost, 1)
 
-/obj/item/weapon/ranged/energy/handle_ammo(var/mob/caller,var/bullet_position=1)
+/obj/item/weapon/ranged/energy/handle_ammo(var/mob/activator,var/bullet_position=1)
+
 	var/obj/item/powercell/PC = get_battery()
 	if(istype(PC))
-		PC.charge_current -= charge_cost
+		PC.charge_current = max(0,PC.charge_current - charge_cost)
+
+	if(charge_icon_state_count > 0)
+		if(old_charge_icon_state == null)
+			overlays.Cut()
+			update_overlays()
+		else
+			var/desired_state = get_charge_icon_state()
+			if(desired_state != old_charge_icon_state)
+				overlays.Cut()
+				update_overlays()
+
 	return null
 
-/obj/item/weapon/ranged/energy/can_gun_shoot(var/mob/caller,var/atom/object,location,params,var/check_time=TRUE,var/messages=TRUE)
+/obj/item/weapon/ranged/energy/can_gun_shoot(var/mob/activator,var/atom/object,location,params,var/check_time=TRUE,var/messages=TRUE)
 
 	if(!..())
 		return FALSE
@@ -143,16 +157,16 @@
 	var/obj/item/powercell/PC = get_battery()
 
 	if(!istype(PC))
-		if(messages) caller.to_chat(span("warning","\The [src.name] doesn't have a battery installed!"))
+		if(messages) activator.to_chat(span("warning","\The [src.name] doesn't have a battery installed!"))
 		return FALSE
 
 	if(PC.charge_current - charge_cost < 0)
-		handle_empty(caller)
+		handle_empty(activator)
 		return FALSE
 
 	return TRUE
 
-/obj/item/weapon/ranged/energy/get_examine_list(var/mob/caller)
+/obj/item/weapon/ranged/energy/get_examine_list(var/mob/activator)
 
 	. = ..()
 
@@ -162,3 +176,33 @@
 		. += div("notice","[PC.charge_current] / [PC.charge_max] ([get_ammo_count()] shots) remaining.")
 	else
 		. += div("warning","No powercell detected!")
+
+/obj/item/weapon/ranged/energy/proc/get_charge_icon_state()
+
+	if(!charge_icon_state_count)
+		return 0
+
+	if(charge_cost <= 0 || charge_icon_state_count <= 1)
+		return charge_icon_state_count
+
+	var/obj/item/powercell/PC = get_battery()
+
+	if(!PC || PC.charge_max <= 0 || PC.charge_current < charge_cost) //Always display 0 charge if we can't fire a shot.
+		return 0
+
+	. = (PC.charge_current/PC.charge_max) * charge_icon_state_count
+	. = CEILING(.,1)
+
+	if(PC.charge_current < PC.charge_max) //Never display max charge if we're not max charge.
+		. = min(.,charge_icon_state_count-1)
+
+/obj/item/weapon/ranged/energy/update_overlays()
+
+	. = ..()
+
+	if(charge_icon_state_count)
+		old_charge_icon_state = get_charge_icon_state()
+		var/image/I = new/image(initial(icon),"charge_[old_charge_icon_state]")
+		if(charge_icon_uses_bullet_color)
+			I.color = bullet_color
+		add_overlay(I)

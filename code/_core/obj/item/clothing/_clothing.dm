@@ -31,7 +31,7 @@
 
 	can_wear = TRUE
 
-	value = 0
+
 
 	var/speed_bonus = 0
 
@@ -51,6 +51,8 @@
 		'sound/effects/inventory/rustle4.ogg',
 		'sound/effects/inventory/rustle5.ogg'
 	)
+
+	can_corrupt = TRUE
 
 
 /obj/item/clothing/on_equip(var/atom/old_location,var/silent=FALSE)

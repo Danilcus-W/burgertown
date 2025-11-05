@@ -24,8 +24,6 @@
 
 	armor = /armor/borg
 
-	soul_size = null
-
 	status_immune = list(
 		STUN = TRUE,
 		SLEEP = TRUE,
@@ -35,11 +33,16 @@
 		CONFUSED = TRUE,
 		DISARM = TRUE,
 		GRAB = TRUE,
-		PAINCRIT = TRUE
+		PAINCRIT = TRUE,
+		SOULTRAP = TRUE
 	)
 
 	stun_angle = 0
 	stun_elevation = 0
+
+/mob/living/simple/turret/PreDestroy()
+	QDEL_NULL(stored_weapon)
+	. = ..()
 
 /mob/living/simple/turret/face_atom(var/atom/A)
 	return set_dir(get_dir(src,A))
@@ -140,7 +143,7 @@
 /mob/living/simple/turret/deployable/get_battery()
 	return stored_battery
 
-/mob/living/simple/turret/deployable/clicked_on_by_object(var/mob/caller,var/atom/object,location,control,params)
+/mob/living/simple/turret/deployable/clicked_on_by_object(var/mob/activator,var/atom/object,location,control,params)
 
 	if(istype(object,/obj/item/powercell/))
 		INTERACT_CHECK
@@ -149,11 +152,11 @@
 		var/obj/item/powercell/PC = object
 
 		if(stored_battery)
-			caller.to_chat(span("notice","You swap out the battery of \the [src.name]."))
+			activator.to_chat(span("notice","You swap out the battery of \the [src.name]."))
 			stored_battery.drop_item(get_turf(src))
 			stored_battery = null
 		else
-			caller.to_chat(span("notice","You insert a new battery into \the [src.name]."))
+			activator.to_chat(span("notice","You insert a new battery into \the [src.name]."))
 
 		PC.drop_item(src)
 		stored_battery = PC
@@ -166,20 +169,20 @@
 		INTERACT_DELAY(10)
 		var/obj/item/magazine/M = object
 		if(!istype(stored_weapon,/obj/item/weapon/ranged/bullet/magazine))
-			caller.to_chat(span("warning","This turret doesn't accept magazines!"))
+			activator.to_chat(span("warning","This turret doesn't accept magazines!"))
 			return FALSE
 
 		var/obj/item/weapon/ranged/bullet/magazine/R = stored_weapon
 		if(!M.weapon_whitelist[R.type])
-			caller.to_chat(span("warning","This turret doesn't accept this type of magazine!"))
+			activator.to_chat(span("warning","This turret doesn't accept this type of magazine!"))
 			return FALSE
 
 		if(stored_magazine)
-			caller.to_chat(span("notice","You swap out the magazine of \the [src.name]."))
+			activator.to_chat(span("notice","You swap out the magazine of \the [src.name]."))
 			stored_magazine.drop_item(get_turf(src))
 			stored_magazine = null
 		else
-			caller.to_chat(span("notice","You insert a new magazine into \the [src.name]."))
+			activator.to_chat(span("notice","You insert a new magazine into \the [src.name]."))
 
 		M.drop_item(src)
 		stored_magazine = M
@@ -199,27 +202,27 @@
 	icon_state = "dead"
 	return ..()
 
-/mob/living/simple/turret/deployable/proc/can_pack_up(var/mob/caller)
+/mob/living/simple/turret/deployable/proc/can_pack_up(var/mob/activator)
 
 	INTERACT_CHECK_NO_DELAY(src)
 
 	if(dead)
-		caller.to_chat(span("warning","The turret is destroyed!"))
+		activator.to_chat(span("warning","The turret is destroyed!"))
 		return FALSE
 
-	if(get_dist(caller,src) > 1)
-		caller.to_chat(span("warning","You're too far away to pack up \the [src.name]!"))
+	if(get_dist(activator,src) > 1)
+		activator.to_chat(span("warning","You're too far away to pack up \the [src.name]!"))
 		return FALSE
 
 	if(qdeleting || !src.z)
-		caller.to_chat(span("warning","You can't pack up \the [src.name] here!"))
+		activator.to_chat(span("warning","You can't pack up \the [src.name] here!"))
 		return FALSE
 
 	return TRUE
 
-/mob/living/simple/turret/deployable/proc/pack_up(var/mob/caller)
+/mob/living/simple/turret/deployable/proc/pack_up(var/mob/activator)
 
-	caller.visible_message(span("warning","\The [caller.name] packs up \the [src.name]."),span("notice","You pack up \the [src.name]."))
+	activator.visible_message(span("warning","\The [activator.name] packs up \the [src.name]."),span("notice","You pack up \the [src.name]."))
 
 	var/obj/item/deployable/mob/sentry/S = new(get_turf(src))
 	INITIALIZE(S)
@@ -237,19 +240,19 @@
 
 	return TRUE
 
-/mob/living/simple/turret/deployable/drop_on_object(var/mob/caller,var/atom/object,location,control,params)
+/mob/living/simple/turret/deployable/drop_on_object(var/mob/activator,var/atom/object,location,control,params)
 
-	if(caller != object)
+	if(activator != object)
 		return ..()
 
 	INTERACT_CHECK
 	INTERACT_CHECK_OBJECT
 	INTERACT_DELAY(10)
 
-	if(can_pack_up(caller))
-		caller.visible_message(span("warning","\The [caller.name] starts to pack up \the [src.name]..."),span("notice","You start to pack up \the [src.name]..."))
-		PROGRESS_BAR(caller,src,SECONDS_TO_DECISECONDS(5),src::pack_up(),caller)
-		PROGRESS_BAR_CONDITIONS(caller,src,src::can_pack_up(),caller)
+	if(can_pack_up(activator))
+		activator.visible_message(span("warning","\The [activator.name] starts to pack up \the [src.name]..."),span("notice","You start to pack up \the [src.name]..."))
+		PROGRESS_BAR(activator,src,SECONDS_TO_DECISECONDS(5),src::pack_up(),activator)
+		PROGRESS_BAR_CONDITIONS(activator,src,src::can_pack_up(),activator)
 
 	return TRUE
 
@@ -280,7 +283,7 @@
 
 	level = 20
 
-	stored_weapon = /obj/item/weapon/ranged/energy/hybrid/carbine/small/ai_core
+	stored_weapon = /obj/item/weapon/ranged/energy/hybrid/carbine/ai_core
 
 	health_base = 250
 
@@ -325,16 +328,14 @@
 	. = ..()
 
 
+//For the AI
 /mob/living/simple/turret/ai_core/immortalish
 	name = "regenerating core turret"
-
 	var/mob/living/simple/silicon/ai/linked_ai
 
 /mob/living/simple/turret/ai_core/immortalish/Finalize()
 	. = ..()
 	linked_ai = locate() in range(VIEW_RANGE,src)
-	if(!linked_ai)
-		qdel(src)
 
 /mob/living/simple/turret/ai_core/immortalish/on_life_slow()
 
@@ -347,14 +348,17 @@
 
 
 /mob/living/simple/turret/ai_core/immortalish/post_death()
+
 	. = ..()
+
 	if(icon_state != "closed")
 		close()
+
+	if(linked_ai && linked_ai.dead)
+		linked_ai = null
+
 	if(linked_ai)
-		if(linked_ai.dead)
-			linked_ai = null
-		if(linked_ai)
-			CALLBACK("\ref[src]_try_revival",SECONDS_TO_DECISECONDS(30),src,src::try_revival())
+		CALLBACK("\ref[src]_try_revival",SECONDS_TO_DECISECONDS(30),src,src::try_revival())
 
 
 /mob/living/simple/turret/ai_core/immortalish/proc/try_revival()
@@ -366,7 +370,5 @@
 		return FALSE
 
 	resurrect()
-	if(ai)
-		ai.set_active(TRUE)
 
 	return TRUE

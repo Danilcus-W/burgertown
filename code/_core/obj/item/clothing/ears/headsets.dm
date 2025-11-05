@@ -1,10 +1,12 @@
 /obj/item/clothing/ears/headset
-	name = "nanotrasen headset"
+	name = "generic headset"
 	desc = "; HELP MAINT!"
 	desc_extended = "A headset for communicating with your fellows."
 	icon = 'icons/obj/item/clothing/ears/headset.dmi'
 
-	var/obj/item/device/radio/stored_radio = /obj/item/device/radio/headset/nanotrasen
+	var/obj/item/device/radio/stored_radio = /obj/item/device/radio/headset
+
+	value = 1
 
 /obj/item/clothing/ears/headset/get_examine_list(var/mob/examiner)
 	. = ..()
@@ -22,17 +24,17 @@
 	QDEL_NULL(stored_radio)
 	. = ..()
 
-/obj/item/clothing/ears/headset/click_self(var/mob/caller,location,control,params)
-	return stored_radio.click_self(caller,location,control,params)
+/obj/item/clothing/ears/headset/click_self(var/mob/activator,location,control,params)
+	return stored_radio.click_self(activator,location,control,params)
 
-/obj/item/clothing/ears/headset/clicked_on_by_object(var/mob/caller as mob,var/atom/object,location,control,params)
-	return stored_radio.clicked_on_by_object(caller,object,location,control,params)
+/obj/item/clothing/ears/headset/clicked_on_by_object(var/mob/activator as mob,var/atom/object,location,control,params)
+	return stored_radio.clicked_on_by_object(activator,object,location,control,params)
 
-/obj/item/clothing/ears/headset/mouse_wheel_on_object(var/mob/caller,delta_x,delta_y,location,control,params)
-	return stored_radio.mouse_wheel_on_object(caller,delta_x,delta_y,location,control,params)
+/obj/item/clothing/ears/headset/mouse_wheel_on_object(var/mob/activator,delta_x,delta_y,location,control,params)
+	return stored_radio.mouse_wheel_on_object(activator,delta_x,delta_y,location,control,params)
 
-/obj/item/clothing/ears/headset/trigger(var/mob/caller,var/atom/source,var/signal_freq,var/signal_code)
-	return stored_radio.trigger(caller,source,signal_freq,signal_code)
+/obj/item/clothing/ears/headset/trigger(var/mob/activator,var/atom/source,var/signal_freq,var/signal_code)
+	return stored_radio.trigger(activator,source,signal_freq,signal_code)
 
 /obj/item/clothing/ears/headset/save_item_data(var/mob/living/advanced/player/P,var/save_inventory = TRUE,var/died=FALSE,var/loadout=FALSE)
 	RUN_PARENT_SAFE
@@ -48,7 +50,9 @@
 	icon = 'icons/obj/item/clothing/ears/antag_headset.dmi'
 	stored_radio = /obj/item/device/radio/headset/syndicate
 
-	contraband = TRUE
+	can_save = FALSE
+
+	value = 1
 
 /obj/item/clothing/ears/headset/mercenary
 	name = "mercenary headset"
@@ -56,7 +60,10 @@
 	icon = 'icons/obj/item/clothing/ears/antag_headset.dmi'
 	stored_radio = /obj/item/device/radio/headset/mercenary
 
-	contraband = TRUE
+	can_save = FALSE
+
+	value = 1
+
 
 /obj/item/clothing/ears/headset/revolutionary
 	name = "revolutionary headset"
@@ -64,13 +71,20 @@
 	icon = 'icons/obj/item/clothing/ears/antag_headset.dmi'
 	stored_radio = /obj/item/device/radio/headset/revolutionary
 
-	contraband = TRUE
+	can_save = FALSE
+
+	value = 1
+
+/obj/item/clothing/ears/headset/nanotrasen
+	stored_radio = /obj/item/device/radio/headset/nanotrasen
+	value = 1
 
 /obj/item/clothing/ears/headset/nanotrasen/medical
 	name = "nanotrasen medical headset"
 	desc = "; TURN ON SUIT SENSORS!"
 	icon = 'icons/obj/item/clothing/ears/medical_headset.dmi'
 	stored_radio = /obj/item/device/radio/headset/nanotrasen/medical
+
 
 /obj/item/clothing/ears/headset/nanotrasen/cat
 	name = "\improper cat ear headset"
@@ -91,3 +105,9 @@
 	worn_layer = LAYER_MOB_CLOTHING_HELMET + 0.01
 
 	rarity = RARITY_UNCOMMON
+
+	value = 1
+
+/obj/item/clothing/ears/headset/nanotrasen/cat/get_base_value()
+	. = ..()
+	. += 5000

@@ -37,15 +37,7 @@
 
 	rarity = RARITY_RARE
 
-/obj/item/weapon/ranged/energy/abductor/update_overlays()
-	. = ..()
-	var/obj/item/powercell/PC = get_battery()
-	if(!istype(PC) || PC.charge_current < charge_cost)
-		var/image/I = new/image(initial(icon),"charge_0")
-		add_overlay(I)
-	else
-		var/image/I = new/image(initial(icon),"charge_[FLOOR((PC.charge_current/PC.charge_max) * 5, 1)]")
-		add_overlay(I)
+	charge_icon_state_count = 5
 
 /obj/item/weapon/ranged/energy/abductor/get_static_spread()
 	return 0
@@ -53,7 +45,7 @@
 /obj/item/weapon/ranged/energy/abductor/get_skill_spread(var/mob/living/L)
 	return max(0,0.05 - (0.02 * L.get_skill_power(SKILL_RANGED)))
 
-/obj/item/weapon/ranged/energy/abductor/clicked_on_by_object(var/mob/caller,var/atom/object,location,control,params)
+/obj/item/weapon/ranged/energy/abductor/clicked_on_by_object(var/mob/activator,var/atom/object,location,control,params)
 
 	if(is_item(object))
 		var/obj/item/I = object
@@ -62,9 +54,9 @@
 			INTERACT_CHECK_OBJECT
 			INTERACT_DELAY(5)
 			if(battery)
-				caller.to_chat(span("warning","You are unable to pry out \the [battery.name]."))
+				activator.to_chat(span("warning","You are unable to pry out \the [battery.name]."))
 			else
-				caller.to_chat(span("warning","There is nothing to pry out of \the [src.name]!"))
+				activator.to_chat(span("warning","There is nothing to pry out of \the [src.name]!"))
 			return TRUE
 
 	. = ..()

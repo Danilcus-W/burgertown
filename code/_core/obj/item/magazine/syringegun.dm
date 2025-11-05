@@ -7,18 +7,18 @@
 	bullet_count_max = 8
 
 	weapon_whitelist = list(
-		/obj/item/weapon/ranged/bullet/magazine/rifle/syringe = TRUE,
+		/obj/item/weapon/ranged/bullet/magazine/rifle/syringe = TRUE
 	)
 
 	ammo = /obj/item/bullet_cartridge/syringe_gun
 
-	bullet_length_min = 18.5
+	bullet_length_min = 18.4
 	bullet_length_best = 18.5
-	bullet_length_max = 18.5
+	bullet_length_max = 18.6
 
-	bullet_diameter_min = 18.5
+	bullet_diameter_min = 18.4
 	bullet_diameter_best = 18.5
-	bullet_diameter_max = 18.5
+	bullet_diameter_max = 18.6
 
 	size = SIZE_2
 

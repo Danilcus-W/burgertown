@@ -3,7 +3,7 @@
 		/obj/item/pinpointer/crew/revolutionary,
 		/obj/item/announcement/rev,
 		/obj/item/clothing/back/storage/backpack/explorer,
-		/obj/item/clothing/belt/bandolier/shotgun_23,
+		/obj/item/clothing/belt/bandoliers/bandolier/shotgun_23,
 		//obj/item/clothing/overwear/armor/plate_carrier/black,
 		//obj/item/armor_plate/super,
 		//obj/item/armor_plate/ultra,
@@ -50,7 +50,6 @@
 
 /obj/structure/interactive/vending/syndicate/guns/rev
 	name = "revolutionary armaments vendor"
-	icon_state = "sovietsoda"
 	stored_types = list(
 		/obj/item/weapon/ranged/bullet/revolver/nagant,
 		/obj/item/bullet_cartridge/revolver_762{amount=5},

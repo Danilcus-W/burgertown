@@ -1,10 +1,8 @@
-/mob/living/advanced/citizen
+/mob/living/advanced/npc/citizen
 	name = "solarian citizen"
 	desc = "RIP."
 
 	dna = /dna/human
-
-	soul_size = SOUL_SIZE_COMMON
 
 	ai = /ai/advanced
 
@@ -17,11 +15,14 @@
 	loyalty_tag = "Solarian"
 	iff_tag = "Solarian"
 
-/mob/living/advanced/citizen/setup_appearance(var/set_default=FALSE)
+	loadout = /loadout/citizen/male
 
-	. = ..()
+	gender = MALE
+	sex = MALE
 
-	if(gender == FEMALE)
-		loadout = /loadout/citizen/female
-	else
-		loadout = /loadout/citizen/male
+/mob/living/advanced/npc/citizen/female
+
+	loadout = /loadout/citizen/female
+
+	gender = FEMALE
+	sex = FEMALE

@@ -26,15 +26,15 @@
 	bullet_color = bullet_color_kill
 
 	update_sprite()
+	update_held_icon()
 
-
-/obj/item/weapon/ranged/energy/hybrid/click_self(var/mob/caller,location,control,params)
+/obj/item/weapon/ranged/energy/hybrid/click_self(var/mob/activator,location,control,params)
 
 	INTERACT_CHECK
 	INTERACT_DELAY(1)
 
 	mode = !mode
-	caller.to_chat(span("notice","You switch \the [src] to [mode ? "kill" : "stun"]."))
+	activator.to_chat(span("notice","You switch \the [src] to [mode ? "kill" : "stun"]."))
 
 	if(mode)
 		projectile = projectile_kill
@@ -49,6 +49,9 @@
 
 	charge_cost = get_charge_cost()
 
+	charge_icon_state_count = null
+
 	update_sprite()
+	update_held_icon()
 
 	return TRUE

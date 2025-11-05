@@ -76,7 +76,7 @@
 		return null
 	FINALIZE(I)
 
-	if(I.contraband || !I.can_save)
+	if(!I.can_save)
 		qdel(I)
 		return null
 
@@ -90,8 +90,8 @@
 
 /obj/item/proc/save_item_data(var/mob/living/advanced/player/P,var/save_inventory = TRUE,var/died=FALSE,var/loadout=FALSE)
 
-	if( (contraband || !can_save) && !length(inventories)) //The inventory check prevents people from losing their stuff if a dev is dumb and adds a contraband item with storage.
-		if(contraband) P.to_chat(span("warning","Notice: \The [src.name] could not be saved because it is considered contraband."))
+	if(!can_save && !length(inventories))
+		P.to_chat(span("warning","Notice: \The [src.name] could not be saved."))
 		return null
 
 	if(loadout && !SSbalance.can_save_loadout[src.type])
@@ -134,13 +134,16 @@
 	if(reagents && length(reagents.stored_reagents))
 		.["reagents"] = reagents.stored_reagents
 
-	var/desired_quality = quality
-	if(died)
-		desired_quality *= 0.75
-		desired_quality -= 25
-		desired_quality = FLOOR(desired_quality,1)
-	if(desired_quality != initial(quality))
-		.["quality"] = clamp(desired_quality,0,200)
+	if(quality != -1)
+		var/desired_quality = quality
+		if(died)
+			desired_quality = FLOOR( max(desired_quality*0.75 - 25,0), 1 )
+
+		if(desired_quality != initial(quality)) //Quality is different than what's in code.
+			.["quality"] = desired_quality
+
+		if(quality_max != initial(quality_max)) //Maximum quality is different from what's in code.
+			.["quality_max"] = quality_max
 
 	if(luck && luck != initial(luck))
 		.["luck"] = luck
@@ -194,8 +197,14 @@
 		amount = object_data["amount"]
 	if(object_data["delete_on_drop"])
 		delete_on_drop = TRUE
-	if(object_data["quality"] && quality != -1)
-		quality = clamp(object_data["quality"],0,200)
+	if(quality != -1)
+		if(object_data["quality"])
+			quality = clamp(object_data["quality"],0,200)
+		if(object_data["quality_max"])
+			quality_max = clamp(object_data["quality_max"],0,200)
+		else
+			quality_max = max(quality_max,quality) //Get the largest between these two.
+
 	if(object_data["luck"])
 		luck = object_data["luck"]
 

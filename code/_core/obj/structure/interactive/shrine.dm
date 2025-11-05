@@ -62,7 +62,7 @@
 	HOOK_REMOVE("post_death","\ref[src]_post_death",L)
 	HOOK_REMOVE("Destroy","\ref[src]_destroy",L)
 	HOOK_REMOVE("post_move","\ref[src]_post_move",L)
-	if(length(tracked_enemies) <= 0 && IS_THINKING(src))
+	if(length(tracked_enemies) <= 0 && spawns_left <= 0 && IS_THINKING(src))
 		end_ritual(TRUE)
 	return TRUE
 
@@ -110,7 +110,7 @@
 
 	return TRUE
 
-/obj/structure/interactive/ritual/proc/start_ritual(var/mob/caller)
+/obj/structure/interactive/ritual/proc/start_ritual(var/mob/activator)
 
 	for(var/mob/living/advanced/player/P in range(src,ritual_size))
 		if(!P || P.dead || P.qdeleting)
@@ -125,6 +125,8 @@
 		log_error("Could not start [src.get_debug_name()], no found players!")
 		return FALSE
 
+	create_smoke() //Must be called before valid turfs.
+
 	if(!length(valid_turfs)) //Something went wrong.
 		log_error("Could not find any good edge turfs for [src.get_debug_name()]. Choosing random ones...")
 		for(var/turf/simulated/floor/F in orange(src,ritual_size-1))
@@ -133,12 +135,11 @@
 			log_error("Could not start [src.get_debug_name()], no valid turfs!")
 			return FALSE
 
-	caller?.visible_message(span("danger","\The [caller.name] activates \the [src.name]!"),span("danger","You activate \the [src.name]!"))
+	activator?.visible_message(span("danger","\The [activator.name] activates \the [src.name]!"),span("danger","You activate \the [src.name]!"))
 	play_sound('sound/effects/ritual_start.ogg',get_turf(src))
 
 	enemy_type_to_spawn = pickweight(possible_ritual_spawns)
 	spawns_left = possible_ritual_spawns[enemy_type_to_spawn]
-	create_smoke()
 	START_THINKING(src)
 	next_enemy_spawn = world.time + SECONDS_TO_DECISECONDS(6)
 	return TRUE
@@ -225,12 +226,12 @@
 					valid_turfs += T
 
 
-/obj/structure/interactive/ritual/clicked_on_by_object(var/mob/caller,var/atom/object,location,control,params)
+/obj/structure/interactive/ritual/clicked_on_by_object(var/mob/activator,var/atom/object,location,control,params)
 
-	if(!is_living(caller))
+	if(!is_living(activator))
 		return ..()
 
-	var/mob/living/L = caller
+	var/mob/living/L = activator
 	if(!L.client)
 		return ..()
 

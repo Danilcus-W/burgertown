@@ -35,7 +35,7 @@
 
 		//Belt and pockets.
 		/obj/item/clothing/belt/storage/colored/black,
-		/obj/item/clothing/belt/bandolier/shotgun_12,
+		/obj/item/clothing/belt/bandoliers/bandolier/shotgun_12,
 		/obj/item/storage/pouch/single/black,
 		/obj/item/storage/pouch/double/black,
 		/obj/item/storage/pouch/triple/black,
@@ -68,7 +68,6 @@
 		/obj/item/weapon/ranged/bullet/magazine/pistol/laton,
 		/obj/item/weapon/ranged/bullet/magazine/pistol/high_power,
 		/obj/item/weapon/ranged/bullet/revolver/defender,
-		/obj/item/weapon/ranged/energy/hybrid/carbine/small,
 
 		//4 smgs or shotguns.
 		/obj/item/weapon/ranged/energy/hybrid/carbine,

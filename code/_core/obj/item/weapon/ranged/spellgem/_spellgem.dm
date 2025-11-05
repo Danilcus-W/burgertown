@@ -36,7 +36,7 @@
 		. *= 0.5 + bullet_count*0.5
 		if((bullet_count % 2) != 1) //Even number of shots means it's not going to be accurate.
 			. *= 0.5
-		. *= max(0.125,1 - (spread_per_shot/90))
+		. *= max(0.125,1 - ((spread_per_shot*bullet_count)/90))
 	. *= 0.5 + (projectile_speed / (TILE_SIZE-1))*0.5
 	. *= 0.5 + min(1,10/shoot_delay)*0.5
 	. *= 0.125
@@ -101,28 +101,28 @@
 /obj/item/weapon/ranged/spellgem/get_movement_spread(var/mob/living/L)
 	return 0
 
-/obj/item/weapon/ranged/spellgem/pre_shoot(var/mob/caller,var/atom/object,location,params,var/damage_multiplier=1)
+/obj/item/weapon/ranged/spellgem/pre_shoot(var/mob/activator,var/atom/object,location,params,var/damage_multiplier=1)
 
 	. = ..()
 
-	if(. && caller.health)
+	if(. && activator.health)
 
 		var/final_mana_cost = base_mana_cost
 
 		if(length(attachment_stats) && attachment_stats["mana_cost_multiplier"])
 			final_mana_cost *= attachment_stats["mana_cost_multiplier"]
 
-		if(is_living(caller))
-			var/mob/living/L = caller
+		if(is_living(activator))
+			var/mob/living/L = activator
 			final_mana_cost *= 1 - L.get_skill_power(casting_type,0,1,2)*0.25 //Up to 25% reduction at level 100. Level 200 is 50%
 
 		final_mana_cost = max(final_mana_cost,base_mana_cost*0.25)
 
-		if(final_mana_cost > caller.health.mana_current)
-			caller.to_chat(span("warning","You try to push with all your mana, but the spell fizzles!"))
+		if(final_mana_cost > activator.health.mana_current)
+			activator.to_chat(span("warning","You try to push with all your mana, but the spell fizzles!"))
 			return FALSE //Fail
 
-		caller.health.adjust_mana(-final_mana_cost)
+		activator.health.adjust_mana(-final_mana_cost)
 
 /obj/item/weapon/ranged/spellgem/update_overlays()
 	. = ..()
@@ -153,5 +153,5 @@
 
 	return list(cos(angle),sin(angle))
 
-/obj/item/weapon/ranged/spellgem/quick(var/mob/caller,var/atom/object,location,params)
-	return shoot(caller,object,location,params)
+/obj/item/weapon/ranged/spellgem/quick(var/mob/activator,var/atom/object,location,params)
+	return shoot(activator,object,location,params)

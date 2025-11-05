@@ -14,9 +14,12 @@
 
 	. = ..()
 
-	var/total_bleed_damage = SAFENUM(damage_table[BLADE])*2.5 + SAFENUM(damage_table[BLUNT])*0.75 + SAFENUM(damage_table[PIERCE])*1.5
+	if(!health || has_status_effect(IMMORTAL))
+		return .
 
-	var/savage_hit = health && !has_status_effect(IMMORTAL) ? damage_amount >= health.health_max*DT.savage_hit_threshold : FALSE
+	var/total_bleed_damage = length(damage_table) ? SAFENUM(damage_table[BLADE])*2.5 + SAFENUM(damage_table[BLUNT])*0.75 + SAFENUM(damage_table[PIERCE])*1.5 : 0
+
+	var/savage_hit = damage_amount >= health.health_max*DT.savage_hit_threshold
 
 	if(savage_hit)
 		total_bleed_damage *= 3
@@ -53,9 +56,9 @@
 	if(ai)
 		ai.on_damage_received(atom_damaged,attacker,weapon,DT,damage_table,damage_amount,stealthy)
 
-	if(dead && time_of_death + 30 <= world.time && (override_butcher || length(butcher_contents)) && is_living(attacker) && get_dist(attacker,src) <= 1)
+	if(!minion_master && dead && time_of_death + 30 <= world.time && (override_butcher || length(butcher_contents)) && is_living(attacker) && get_dist(attacker,src) <= 1)
 		var/mob/living/L = attacker
-		var/blade_damage = SAFENUM(damage_table[BLADE]) + SAFENUM(damage_table[LASER])
+		var/blade_damage = length(damage_table) ? SAFENUM(damage_table[BLADE]) + SAFENUM(damage_table[LASER]) : 0
 
 		var/atom/atom_to_butcher = src
 		if(is_organ(atom_damaged))
@@ -75,20 +78,20 @@
 		remove_status_effect(PARRIED)
 		add_status_effect(STUN,stun_magnitude,stun_duration)
 
-/mob/living/proc/can_be_butchered(var/mob/caller,var/obj/item/butchering_item,var/atom/atom_to_butcher)
+/mob/living/proc/can_be_butchered(var/mob/activator,var/obj/item/butchering_item,var/atom/atom_to_butcher)
 
-	if(caller)
+	if(activator)
 		INTERACT_CHECK_NO_DELAY(src)
 		if(butchering_item)
 			INTERACT_CHECK_NO_DELAY(butchering_item)
 
 	if(!src.dead)
-		caller?.to_chat(span("danger","OH FUCK THEY'RE STILL ALIVE!"))
+		activator?.to_chat(span("danger","OH FUCK THEY'RE STILL ALIVE!"))
 		return FALSE
 
 	return TRUE
 
-/mob/living/proc/on_butcher(var/mob/caller,var/atom/movable/atom_to_butcher,var/turf/override_turf)
+/mob/living/proc/on_butcher(var/mob/activator,var/atom/movable/atom_to_butcher,var/turf/override_turf)
 
 	if(src.qdeleting || atom_to_butcher.qdeleting)
 		return FALSE
@@ -101,7 +104,7 @@
 	var/turf/T = override_turf ? override_turf : get_turf(src)
 
 	if(src.override_butcher)
-		src.create_override_contents(caller,atom_to_butcher)
+		src.create_override_contents(activator,atom_to_butcher)
 	else if(atom_to_butcher != src)
 		if(length(src.butcher_contents))
 			var/atom/movable/M = src.butcher_contents[1] //Hacky, I know, but it just werks.
@@ -130,7 +133,7 @@
 	override_butcher = FALSE
 	butcher_contents = null
 
-	caller?.visible_message(span("danger","\The [caller.name] butchers \the [atom_to_butcher.name]!"),span("danger","You butcher \the [atom_to_butcher.name]."))
+	activator?.visible_message(span("danger","\The [activator.name] butchers \the [atom_to_butcher.name]!"),span("danger","You butcher \the [atom_to_butcher.name]."))
 	if(gib_on_butcher)
 		atom_to_butcher.gib(hard=TRUE)
 	else
@@ -139,7 +142,7 @@
 /mob/living/proc/get_damage_received_multiplier(var/atom/attacker,var/atom/victim,var/atom/weapon,var/atom/hit_object,var/atom/blamed,var/damagetype/DT)
 	return 1
 
-/mob/living/proc/create_override_contents(var/mob/living/caller)
+/mob/living/proc/create_override_contents(var/mob/living/activator)
 	return TRUE
 
 

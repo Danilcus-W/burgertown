@@ -11,6 +11,8 @@
 
 	material_multiplier = 0.25
 
+	value = 0
+
 /obj/item/material/rod/update_icon()
 	var/material/M = SSmaterials.all_materials[material_id]
 	if(!M)
@@ -24,7 +26,7 @@
 		color = M.color
 	return ..()
 
-/obj/item/material/rod/clicked_on_by_object(var/mob/caller,var/atom/object,location,control,params)
+/obj/item/material/rod/clicked_on_by_object(var/mob/activator,var/atom/object,location,control,params)
 
 	if(is_item(object))
 		var/obj/item/I = object
@@ -38,7 +40,7 @@
 			INITIALIZE(R)
 			GENERATE(R)
 			FINALIZE(R)
-			caller.visible_message(span("notice","\The [caller.name] cuts some [src.name] into some [R.name]."),span("notice","You cut \the [src.name] into 8 [R.name]."))
+			activator.visible_message(span("notice","\The [activator.name] cuts some [src.name] into some [R.name]."),span("notice","You cut \the [src.name] into 8 [R.name]."))
 			add_item_count(-1)
 			R.Move(get_turf(I))
 			return TRUE
@@ -47,7 +49,7 @@
 			INTERACT_CHECK_OBJECT
 			INTERACT_DELAY(5)
 			if(amount < 4)
-				caller.to_chat(span("notice","You need 4 rods to weld a sheet!"))
+				activator.to_chat(span("notice","You need 4 rods to weld a sheet!"))
 				return ..()
 			var/obj/item/material/sheet/R = new(get_turf(src))
 			R.material_id = material_id
@@ -55,7 +57,7 @@
 			INITIALIZE(R)
 			GENERATE(R)
 			FINALIZE(R)
-			caller.visible_message(span("notice","\The [caller.name] crudely welds the [src.name] into \a [R.name]s."),span("notice","You crudely weld \the [src.name] into \a [R.name]."))
+			activator.visible_message(span("notice","\The [activator.name] crudely welds the [src.name] into \a [R.name]s."),span("notice","You crudely weld \the [src.name] into \a [R.name]."))
 			add_item_count(-4)
 			R.Move(get_turf(I))
 			return TRUE

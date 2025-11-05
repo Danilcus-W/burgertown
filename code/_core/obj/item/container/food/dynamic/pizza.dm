@@ -39,6 +39,8 @@
 
 	var/cooked_percent = 0 //0 to 1 value of how much it's cooked.
 
+	value = 0
+
 /obj/item/container/edible/dynamic/pizza/sliced
 	crafting_id = "pizza_slice"
 	sliced = TRUE
@@ -117,7 +119,7 @@
 			FINALIZE(P)
 		qdel(src)
 
-/obj/item/container/edible/dynamic/pizza/clicked_on_by_object(var/mob/caller,var/atom/object,location,control,params)
+/obj/item/container/edible/dynamic/pizza/clicked_on_by_object(var/mob/activator,var/atom/object,location,control,params)
 
 	if(!sliced && istype(object,/obj/item/container) && object.reagents && object.reagents.volume_current && !istype(object,/obj/item/container/edible/dynamic/pizza))
 		var/valid = FALSE
@@ -127,8 +129,8 @@
 				color_sauce = I.reagents.color
 			else
 				color_sauce = blend_colors(color_sauce,I.reagents.color,0.5) //Lazy, I know but it saves on vars and processing.
-			I.reagents.transfer_reagents_to(src.reagents_toppings,min(10,I.reagents.volume_current),caller = caller)
-			caller.to_chat(span("notice","You sauce up \the [initial(src.name)]."))
+			I.reagents.transfer_reagents_to(src.reagents_toppings,min(10,I.reagents.volume_current),activator = activator)
+			activator.to_chat(span("notice","You sauce up \the [initial(src.name)]."))
 			return TRUE
 		else if(istype(I,/obj/item/container/edible/dynamic/cheese))
 			if(!color_cheese)
@@ -150,11 +152,11 @@
 						topping_data["large"] += I.reagents.color
 		if(valid)
 			update_sprite()
-			caller.to_chat(span("notice","You add \the [I.name] to \the [initial(src.name)]."))
-			I.reagents.transfer_reagents_to(src.reagents_toppings,I.reagents.volume_current,caller = caller)
+			activator.to_chat(span("notice","You add \the [I.name] to \the [initial(src.name)]."))
+			I.reagents.transfer_reagents_to(src.reagents_toppings,I.reagents.volume_current,activator = activator)
 			qdel(I)
 		else
-			caller.to_chat(span("warning","You can't reasonably find a way to add \the [I.name] to \the [initial(src.name)]..."))
+			activator.to_chat(span("warning","You can't reasonably find a way to add \the [I.name] to \the [initial(src.name)]..."))
 
 		return TRUE
 
@@ -173,7 +175,10 @@
 		else
 			total_cooked += volume
 
-	cooked_percent = total_cooked/(total_raw+total_cooked)
+	if(total_cooked > 0)
+		cooked_percent = total_cooked/(total_raw+total_cooked)
+	else
+		cooked_percent = 0
 
 	if(reagents)
 		color = reagents.color
@@ -204,7 +209,7 @@
 	for(var/k in topping_data)
 		var/list/v = topping_data[k]
 		for(var/i=1,i<=length(v),i++)
-			var/local_offset = 1 + (i+offsets[k] % 2)
+			var/local_offset = 1 + ( (i+offsets[k]) % 3)
 			var/image/topping = new/image(icon,"topping_[k]_[local_offset]")
 			topping.appearance_flags = src.appearance_flags | RESET_COLOR
 			topping.color = v[i]
@@ -243,6 +248,8 @@
 
 	return T.qdeleting ? null : T
 
+/obj/item/container/edible/dynamic/pizza/mushroom
+	value = 1
 
 /obj/item/container/edible/dynamic/pizza/mushroom/Generate()
 	. = ..()

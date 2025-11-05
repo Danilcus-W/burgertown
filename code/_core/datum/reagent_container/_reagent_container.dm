@@ -270,7 +270,7 @@
 			continue
 		var/volume = stored_reagents[r_id]
 		stored_reagents_temperature[r_id] = average_temperature
-		if(isnum(R.heated_reagent_temp) && R.heated_reagent_temp < average_temperature)
+		if(R.heated_reagent_temp && R.heated_reagent_temp < average_temperature)
 			var/temperature_heat_mod = (average_temperature/max(0.1,R.heated_reagent_temp)) ** 2
 			var/amount_to_remove = min(R.heated_reagent_amount + (volume * R.heated_reagent_mul * temperature_heat_mod),volume)
 			amount_to_remove = CEILING(amount_to_remove,REAGENT_ROUNDING)
@@ -279,8 +279,7 @@
 				if(R.heated_reagent && removed_amount > 0)
 					add_reagent(R.heated_reagent,removed_amount,should_update = FALSE, check_recipes = FALSE)
 				. = TRUE
-
-		else if(isnum(R.cooled_reagent_temp) && R.cooled_reagent_temp > average_temperature)
+		else if(R.cooled_reagent_temp && R.cooled_reagent_temp > average_temperature)
 			var/temperature_cool_mod = (R.cooled_reagent_temp/max(0.1,average_temperature)) ** 2
 			var/amount_to_remove = min(R.cooled_reagent_amount + (volume * R.cooled_reagent_mul * temperature_cool_mod),volume)
 			var/removed_amount = -add_reagent(r_id,-amount_to_remove,should_update = FALSE, check_recipes = FALSE)
@@ -299,7 +298,7 @@
 	return TRUE
 
 
-/reagent_container/proc/update_container(var/mob/caller,var/update_owner = TRUE,var/force=FALSE)
+/reagent_container/proc/update_container(var/mob/activator,var/update_owner = TRUE,var/force=FALSE)
 
 	if(!owner)
 		return FALSE
@@ -372,7 +371,7 @@
 		var/turf/T = get_turf(owner)
 		if(T)
 			owner.visible_message(span("warning","\The [owner.name] overflows!"))
-			src.splash(caller,T,difference)
+			src.splash(activator,T,difference)
 		else
 			remove_reagents(difference)
 		return TRUE
@@ -392,14 +391,14 @@
 	return TRUE
 
 
-/reagent_container/proc/process_recipes(var/mob/caller,var/from_temperature_change=FALSE)
+/reagent_container/proc/process_recipes(var/mob/activator,var/from_temperature_change=FALSE)
 
 	if(!allow_recipe_processing)
 		return FALSE
 
-	if(!caller && is_item(src.owner))
+	if(!activator && is_item(src.owner))
 		var/obj/item/I = src.owner
-		caller = I.last_interacted
+		activator = I.last_interacted
 
 	var/list/c_id_to_volume = stored_reagents
 	var/list/c_id_to_temperature = stored_reagents_temperature
@@ -488,14 +487,14 @@
 		amount_removed -= add_reagent(k,-amount_to_remove,TNULL,FALSE,FALSE)
 
 	if(amount_removed > 0)
-		update_container(caller,FALSE)
+		update_container(activator,FALSE)
 
 	var/desired_temperature = average_temperature
 	for(var/k in found_recipe.results)
 		var/v = found_recipe.results[k] * portions_to_make
-		add_reagent(k,v,desired_temperature,FALSE,FALSE,caller)
+		add_reagent(k,v,desired_temperature,FALSE,FALSE,activator)
 
-	found_recipe.on_react(caller,src,portions_to_make)
+	found_recipe.on_react(activator,src,portions_to_make)
 
 	if(amount_removed <= 0 && volume_current > 0)
 		for(var/r_id in found_recipe.required_reagents) //Prevents infinite loops.
@@ -505,7 +504,7 @@
 			add_reagent(r_id,-v,TNULL,FALSE,FALSE)
 
 	if(found_recipe.result && owner && !istype(owner,found_recipe.result))
-		update_container(caller,FALSE)
+		update_container(activator,FALSE)
 		while(volume_current > 0)
 			CHECK_TICK(75,FPS_SERVER)
 			var/obj/item/A = new found_recipe.result(get_turf(owner))
@@ -513,15 +512,15 @@
 			FINALIZE(A)
 			if(!A.reagents)
 				break
-			transfer_reagents_to(A.reagents,min(A.reagents.volume_max - A.reagents.volume_current,volume_current),caller = caller)
+			transfer_reagents_to(A.reagents,min(A.reagents.volume_max - A.reagents.volume_current,volume_current),activator = activator)
 		return TRUE
 
-	update_container(caller)
+	update_container(activator)
 	//play_sound('sound/items/bikehorn.ogg',get_turf(owner),range_max=VIEW_RANGE) TODO: Replace with reaction sound.
 
 	return TRUE
 
-/reagent_container/proc/add_reagent(var/reagent_type, var/amount=0, var/temperature = TNULL, var/should_update = TRUE,var/check_recipes = TRUE,var/mob/living/caller)
+/reagent_container/proc/add_reagent(var/reagent_type, var/amount=0, var/temperature = TNULL, var/should_update = TRUE,var/check_recipes = TRUE,var/mob/living/activator)
 
 	if(abs(amount) < REAGENT_ROUNDING)
 		if(amount > 0)
@@ -562,7 +561,7 @@
 	. = amount //This is the REAL WORLD AMOUNT that is added. This is used for removing stuff.
 
 	if(amount > 0)
-		amount = R.on_add(src,amount,previous_amount,caller) //This is the VIRTUAL AMOUNT that is actually added.
+		amount = R.on_add(src,amount,previous_amount,activator) //This is the VIRTUAL AMOUNT that is actually added.
 		var/mob/living/L
 		if(src.owner)
 			if(is_living(src.owner))
@@ -570,7 +569,7 @@
 			else if(is_living(src.owner.loc))
 				L = src.owner.loc
 		if(L)
-			amount = R.on_add_living(L,src,amount,previous_amount,caller) //This is the VIRTUAL AMOUNT that is actually added.
+			amount = R.on_add_living(L,src,amount,previous_amount,activator) //This is the VIRTUAL AMOUNT that is actually added.
 
 	if(amount)
 		stored_reagents[reagent_type] += amount
@@ -583,12 +582,12 @@
 				stored_reagents_temperature[reagent_type] = temperature
 
 	if(should_update)
-		update_container(caller)
+		update_container(activator)
 
 	if(check_recipes)
-		process_recipes(caller)
+		process_recipes(activator)
 
-/reagent_container/proc/remove_reagents(var/amount=volume_current,var/should_update = TRUE,var/check_recipes = TRUE,var/mob/living/caller)
+/reagent_container/proc/remove_reagents(var/amount=volume_current,var/should_update = TRUE,var/check_recipes = TRUE,var/mob/living/activator)
 
 	var/total_volume = volume_current
 
@@ -597,13 +596,13 @@
 	for(var/r_id in stored_reagents)
 		var/volume = stored_reagents[r_id]
 		var/ratio = volume/total_volume
-		. += -add_reagent(r_id,-ratio*amount,should_update=FALSE,check_recipes=FALSE,caller=caller)
+		. += -add_reagent(r_id,-ratio*amount,should_update=FALSE,check_recipes=FALSE,activator=activator)
 
 	if(should_update)
-		update_container(caller)
+		update_container(activator)
 
 	if(check_recipes)
-		process_recipes(caller)
+		process_recipes(activator)
 
 /reagent_container/proc/remove_all_reagents()
 	stored_reagents.Cut()
@@ -611,7 +610,7 @@
 	update_container()
 	return TRUE
 
-/reagent_container/proc/transfer_reagents_to(var/reagent_container/target_container,var/amount=src.volume_current,var/should_update=TRUE,var/check_recipes = TRUE,var/mob/living/caller,var/include_abstract=FALSE) //Transfer all the reagents.
+/reagent_container/proc/transfer_reagents_to(var/reagent_container/target_container,var/amount=src.volume_current,var/should_update=TRUE,var/check_recipes = TRUE,var/mob/living/activator,var/include_abstract=FALSE) //Transfer all the reagents.
 
 	if(!target_container)
 		CRASH("Tried to transfer reagents from [owner], but there was no target_container!")
@@ -620,13 +619,13 @@
 		return 0
 
 	if(amount < 0)
-		return -target_container.transfer_reagents_to(src,-amount,should_update,check_recipes,caller)
+		return -target_container.transfer_reagents_to(src,-amount,should_update,check_recipes,activator)
 
 	amount = min(amount,volume_current)
 
-	if(caller && target_container.owner)
+	if(activator && target_container.owner)
 
-		var/mob/living/L1 = caller
+		var/mob/living/L1 = activator
 		var/mob/living/L2
 
 		if(is_living(target_container.owner))
@@ -657,17 +656,17 @@
 			temp,
 			should_update=FALSE,
 			check_recipes=FALSE,
-			caller = caller
+			activator = activator
 		)
-		total_amount_transfered += -add_reagent(r_id,-amount_transfered,TNULL,FALSE,FALSE,caller=caller)
+		total_amount_transfered += -add_reagent(r_id,-amount_transfered,TNULL,FALSE,FALSE,activator=activator)
 
 	if(should_update)
-		src.update_container(caller)
-		target_container.update_container(caller)
+		src.update_container(activator)
+		target_container.update_container(activator)
 
 	if(check_recipes)
-		src.process_recipes(caller)
-		target_container.process_recipes(caller)
+		src.process_recipes(activator)
+		target_container.process_recipes(activator)
 
 	return total_amount_transfered
 
@@ -715,23 +714,23 @@
 	return list(english_list(english_flavor_profile),flavor_flags,flavor_count)
 
 
-/reagent_container/proc/splash(var/mob/caller,var/atom/target,var/splash_amount = volume_current,var/silent = FALSE,var/strength_mod=1)
+/reagent_container/proc/splash(var/mob/activator,var/atom/target,var/splash_amount = volume_current,var/silent = FALSE,var/strength_mod=1)
 
 	if(!splash_amount || !volume_current)
-		if(!silent) caller?.to_chat(span("warning","There is nothing to splash!"))
+		if(!silent) activator?.to_chat(span("warning","There is nothing to splash!"))
 		return FALSE
 
 	if(!target)
 		CRASH("Tried to splash with no target!")
 
-	target = target.change_victim(caller)
+	target = target.change_victim(activator)
 
 	if(!target)
 		CRASH("Tried to splash with invalid target!")
 
-	return target.on_splash(caller,src,splash_amount,silent,strength_mod)
+	return target.on_splash(activator,src,splash_amount,silent,strength_mod)
 
-/atom/proc/on_splash(var/mob/caller,var/reagent_container/source,var/splash_amount,var/silent = FALSE,var/strength_mod=1)
+/atom/proc/on_splash(var/mob/activator,var/reagent_container/source,var/splash_amount,var/silent = FALSE,var/strength_mod=1)
 
 	splash_amount = min(splash_amount,source.volume_current)
 
@@ -739,24 +738,24 @@
 		for(var/r_id in source.stored_reagents)
 			var/reagent/R = REAGENT(r_id)
 			var/volume_to_splash = -source.add_reagent(R.type,-source.stored_reagents[r_id] * (splash_amount/source.volume_current),TNULL,FALSE,FALSE)
-			R.on_splash(source,caller,src,volume_to_splash,strength_mod)
-		if(!silent) caller?.visible_message(span("danger","\The [caller] splashes the contents of \the [source.owner.name] on \the [src.name]!"),span("warning","You splash the contents of \the [source.owner.name] on \the [src.name]!"))
-		source.update_container(caller)
-		source.process_recipes(caller)
+			R.on_splash(source,activator,src,volume_to_splash,strength_mod)
+		if(!silent) activator?.visible_message(span("danger","\The [activator] splashes the contents of \the [source.owner.name] on \the [src.name]!"),span("warning","You splash the contents of \the [source.owner.name] on \the [src.name]!"))
+		source.update_container(activator)
+		source.process_recipes(activator)
 		return TRUE
 
 	return FALSE
 
-/mob/living/on_splash(var/mob/caller,var/reagent_container/source,var/splash_amount,var/silent = FALSE,var/strength_mod=1)
+/mob/living/on_splash(var/mob/activator,var/reagent_container/source,var/splash_amount,var/silent = FALSE,var/strength_mod=1)
 
-	if(source.contains_lethal && caller != src && is_living(caller))
-		var/mob/living/L = caller
+	if(source.contains_lethal && activator != src && is_living(activator))
+		var/mob/living/L = activator
 		if(!allow_hostile_action(L.loyalty_tag,src))
 			return FALSE
 
 	. = ..()
 
-/reagent_container/proc/consume(var/mob/caller,var/mob/living/consumer)
+/reagent_container/proc/consume(var/mob/activator,var/mob/living/consumer)
 
 	if(!owner)
 		CRASH("[src.get_debug_name()] had no owner!")
@@ -765,14 +764,14 @@
 	var/consume_sound = owner.get_consume_sound()
 
 	if(!length(stored_reagents) || volume_current <= 0)
-		caller.to_chat(span("warning","There is nothing left of \the [src.owner.name] to [consume_verb]!"))
+		activator.to_chat(span("warning","There is nothing left of \the [src.owner.name] to [consume_verb]!"))
 		return FALSE
 
 	if(is_advanced(consumer))
 		var/mob/living/advanced/A = consumer
 		if(!A.labeled_organs[BODY_STOMACH])
-			if(caller && caller != consumer)
-				caller.to_chat(span("warning","You don't know how they can [consume_verb] \the [src.owner.name]!"))
+			if(activator && activator != consumer)
+				activator.to_chat(span("warning","You don't know how they can [consume_verb] \the [src.owner.name]!"))
 			consumer.to_chat(span("warning","You don't know how you can [consume_verb] \the [src]!"))
 			return FALSE
 
@@ -805,8 +804,8 @@
 		else
 			final_flavor_text = null
 
-		if(caller && caller != consumer)
-			consumer.visible_message(span("warning","\The [caller.name] forces \the [consumer.name] to [consume_verb] \the [src.owner.name]!"),span("danger","\The [caller.name] forces you to [consume_verb] the [src.owner.name]!"))
+		if(activator && activator != consumer)
+			consumer.visible_message(span("warning","\The [activator.name] forces \the [consumer.name] to [consume_verb] \the [src.owner.name]!"),span("danger","\The [activator.name] forces you to [consume_verb] the [src.owner.name]!"))
 		else
 			consumer.visible_message(span("notice","\The [consumer.name] [consume_verb]s \the [src.owner.name]."),span("notice","You [consume_verb] \the [src.owner.name]."))
 
@@ -817,6 +816,6 @@
 			consumer.to_chat(span("notice",final_flavor_text))
 
 		var/obj/item/organ/internal/stomach/S = A.labeled_organs[BODY_STOMACH]
-		. = transfer_reagents_to(S.reagents,volume_current, caller = caller,include_abstract=TRUE)
+		. = transfer_reagents_to(S.reagents,volume_current, activator = activator,include_abstract=TRUE)
 	else
-		. = transfer_reagents_to(consumer.reagents,volume_current, caller = caller,include_abstract=TRUE)
+		. = transfer_reagents_to(consumer.reagents,volume_current, activator = activator,include_abstract=TRUE)

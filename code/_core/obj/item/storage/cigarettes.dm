@@ -21,11 +21,11 @@
 
 	var/obj/item/storage/cigarettes/cigarette_type
 
-	value = 5
+	value = 0
 
-/obj/item/storage/cigarettes/click_self(var/mob/caller,location,control,params)
+/obj/item/storage/cigarettes/click_self(var/mob/activator,location,control,params)
 
-	if(open && caller.attack_flags & CONTROL_MOD_DISARM)
+	if(open && activator.attack_flags & CONTROL_MOD_DISARM)
 		open = FALSE
 		update_sprite()
 		return TRUE
@@ -73,38 +73,46 @@
 	name = "\improper NanoTrasen Red Label cigarettes"
 	cigarette_type = /obj/item/container/cigarette/red
 	icon_state = "red"
+	value = 10
 
 /obj/item/storage/cigarettes/gold
 	name = "\improper NanoTrasen Gold Label cigarettes"
 	cigarette_type = /obj/item/container/cigarette/gold
 	icon_state = "gold"
+	value = 10
 
 /obj/item/storage/cigarettes/blue
 	name = "\improper Water Smooth cigarettes"
 	cigarette_type = /obj/item/container/cigarette/blue
 	icon_state = "blue"
+	value = 10
 
 /obj/item/storage/cigarettes/green
 	name = "\improper Freshmith cigarettes"
 	cigarette_type = /obj/item/container/cigarette/green
 	icon_state = "green"
+	value = 10
 
 /obj/item/storage/cigarettes/purple
 	name = "\improper Hip Hipster cigarettes"
 	cigarette_type = /obj/item/container/cigarette/purple
 	icon_state = "purple"
+	value = 10
 
 /obj/item/storage/cigarettes/orange
 	name = "\improper Western Classic cigarettes"
 	cigarette_type = /obj/item/container/cigarette/orange
 	icon_state = "orange"
+	value = 10
 
 /obj/item/storage/cigarettes/syndicate
 	name = "\improper Syndicate Smokes cigarettes"
 	cigarette_type = /obj/item/container/cigarette/syndicate
 	icon_state = "syndicate"
+	value = 10
 
 /obj/item/storage/cigarettes/slavic
 	name = "\improper Slavic Blue cigarettes"
 	cigarette_type = /obj/item/container/cigarette/slavic
 	icon_state = "slavic"
+	value = 10
